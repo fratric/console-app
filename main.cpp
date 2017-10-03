@@ -4,107 +4,47 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iterator>
 
 using namespace std;
 
-int main()
+struct Line : public std::string {};
+
+template<typename T> size_t counter(std::istream &vstup)
 {
-	string option;
-	string vstup;
-	cout << "text-counter <option> [input.txt]" << endl;
-	cout << "  -c  spocitanie znakov" << endl << "  -w  spocitanie slov" << endl << "  -l  spocitanie riadkov" << endl;
-	cout << "zadajte option: ";
-	cin >> option;
-	cout << endl;
-	cout << "zadajte vstup: ";
-	cin >> vstup; 
+	return std::distance(std::istream_iterator<T>(vstup), std::istream_iterator<T>());
+}
 
+std::istream &operator >> (std::istream &stream, Line &line) 
+{
+	std::getline(stream, line);
+	return stream;
+}
 
-	ifstream myfile;
-	myfile.open(vstup);
-	string line;
-	int pocRiad = 0;
-	int pocZnak = 0;
-	int pocSlov = 0;
-	if (myfile.is_open()) {
-		while (getline(myfile, line))
+int main(int argc, char *argv[])
+{
+	if (argc < 2 || argc>3) return -1;
+	std::fstream fs;
+	if (argc==3) {
+		fs.open(argv[2], std::fstream::in);
+		if (fs.bad())
 		{
-			cout << line << "\n";
-			if (option=="-l") {
-				pocRiad++;
-			}
-			else if (option=="-c") {
-				for (char& c : line) {
-					if (isspace(c)==0) {
-						pocZnak++;
-					}
-				}
-			}
-			else if (option=="-w") {
-				if (line.find_first_not_of(' ') != std::string::npos) {
-					const char *c = line.c_str();
-					for (int i = 0; i < line.length(); i++) {
-						if (isspace(c[i]) != 0) {
-							pocSlov++;
-							while (isspace(c[i]) != 0 && i + 1 < line.length()) {
-								i++;
-							}
-						}
-					}
-					if (line.length() > 0) {
-						pocSlov++;
-					}
-				}
-			}
-			else {
-				cout << "bad option" << endl;
-			}
+			return -1;
 		}
-		myfile.close();
+	}
+	std::istream &vstup = (argc == 3) ? fs : std::cin;
+
+	if (argv[1]==std::string("-c")) {
+		std::cout << counter<char>(vstup);
+	}
+	else if (argv[1] == std::string("-w")) {
+		std::cout << counter<std::string>(vstup);
+	}
+	else if (argv[1] == std::string("-e")) {
+		std::cout << counter<Line>(vstup);
 	}
 	else {
-		line = vstup;
-		cout << vstup << endl;
-		if (option == "-l") {
-			pocRiad++;
-		}
-		else if (option == "-c") {
-			for (char& c : line) {
-				if (isspace(c) == 0) {
-					pocZnak++;
-				}
-			}
-		}
-		else if (option == "-w") {
-			if (line.find_first_not_of(' ') != std::string::npos) {
-				const char *c = line.c_str();
-				for (int i = 0; i < line.length(); i++) {
-					if (isspace(c[i]) != 0) {
-						pocSlov++;
-						while (isspace(c[i]) != 0 && i + 1 < line.length()) {
-							i++;
-						}
-					}
-				}
-				if (line.length() > 0) {
-					pocSlov++;
-				}
-			}
-		}
-		else {
-			cout << "bad option" << endl;
-		}
-	}
-
-
-	if (option == "-l") {
-		cout << pocRiad << endl;
-	}
-	else if (option == "-c") {
-		cout << pocZnak << endl;
-	}
-	else if (option == "-w") {
-		cout << pocSlov << endl;
+		return -1;
 	}
 
 	return 0;
